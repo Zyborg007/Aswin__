@@ -1,0 +1,109 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public class Story {
+    private String text;
+    private long creationTime;
+    private long expirationTime;
+
+    public Story(String text, long creationTime, long expirationTime) {
+        this.text = text;
+        this.creationTime = creationTime;
+        this.expirationTime = expirationTime;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public long getCreationTime() {
+        return creationTime;
+    }
+
+    public long getExpirationTime() {
+        return expirationTime;
+    }
+
+    public boolean isExpired() {
+        return System.currentTimeMillis() > expirationTime;
+    }
+}
+
+public class StoryUploader {
+    private static final long STORY_DURATION = 10 * 60 * 1000;     
+    private List<Story> stories;
+
+    public StoryUploader() {
+        stories = new ArrayList<>();
+    }
+
+    public void uploadStory(String text) {
+        long currentTime = System.currentTimeMillis();
+        long expirationTime = currentTime + STORY_DURATION;
+        Story story = new Story(text, currentTime, expirationTime);
+        stories.add(story);
+    }
+
+    public List<Story> getActiveStories() {
+        List<Story> activeStories = new ArrayList<>();
+        for (Story story : stories) {
+            if (!story.isExpired()) {
+                activeStories.add(story);
+            }
+        }
+        return activeStories;
+    }
+}
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.*;
+
+public class StoryUploadApp extends JFrame {
+    private static final long serialVersionUID = 1L;
+    private JTextArea storyTextArea;
+    private JButton uploadButton;
+    private StoryUploader storyUploader;
+
+    public StoryUploadApp() {
+        setTitle("Story Upload");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 200);
+
+        storyTextArea = new JTextArea();
+        uploadButton = new JButton("Upload");
+        uploadButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String text = storyTextArea.getText();
+                storyUploader.uploadStory(text);
+                JOptionPane.showMessageDialog(StoryUploadApp.this, "Story uploaded successfully");
+            }
+        });
+
+        JPanel panel = new JPanel();
+        panel.add(storyTextArea);
+        panel.add(uploadButton);
+
+        getContentPane().add(panel);
+        setVisible(true);
+
+        storyUploader = new StoryUploader();
+        Timer timer = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                List<Story> activeStories = storyUploader.getActiveStories();
+                for (Story story : activeStories) {
+                    if (story.isExpired()) {
+                        stories.remove(story);
+                    }
+                }
+            }
+        });
+        timer.start();
+    }
+
+    public static void main(String[] args) {
+        new StoryUploadApp();
+    }
+}
